@@ -21,6 +21,8 @@ def analyze(request):
         text, url = body.get('text'), body.get('url')
         if not text and not url:
             return JsonResponse({"error": {"type": "validation_error", "code": "INVALID_TEXT", "message": "text or url required", "details": {}}}, status=400)
+        if text and url:
+            return JsonResponse({"error": {"type": "validation_error", "code": "INVALID_TEXT", "message": "Request must contain only one of 'text' or 'url', not both", "details": {}}}, status=400)
         request_dict = {"url": url} if url else {"text": text}
         options = {"language": request.GET.get('language', 'en')}
         if request.GET.get('summarize') == 'true': options['summarize'] = True
@@ -31,7 +33,12 @@ def analyze(request):
         result = {"results": response_data.model_dump().get('results', {})} if hasattr(response_data, 'model_dump') else {"results": {}}
         return JsonResponse(result)
     except Exception as e:
-        return JsonResponse({"error": {"type": "processing_error", "code": "INVALID_TEXT", "message": str(e), "details": {}}}, status=500)
+        error_msg = str(e).lower()
+        # Detect URL-related errors
+        is_url_error = url and ('url' in error_msg or 'unreachable' in error_msg or 'routable' in error_msg)
+        error_code = "INVALID_URL" if is_url_error else "INVALID_TEXT"
+        status_code = 400 if is_url_error else 500
+        return JsonResponse({"error": {"type": "processing_error", "code": error_code, "message": str(e), "details": {}}}, status=status_code)
 
 @require_http_methods(["GET"])
 def metadata(request):
