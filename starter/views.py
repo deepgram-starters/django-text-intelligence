@@ -30,7 +30,11 @@ def analyze(request):
         if request.GET.get('sentiment') == 'true': options['sentiment'] = True
         if request.GET.get('intents') == 'true': options['intents'] = True
         response_data = deepgram.read.v1.text.analyze(request=request_dict, **options)
-        result = {"results": response_data.model_dump().get('results', {})} if hasattr(response_data, 'model_dump') else {"results": {}}
+        # Use model_dump on results to properly serialize Pydantic model
+        if hasattr(response_data, 'results') and hasattr(response_data.results, 'model_dump'):
+            result = {"results": response_data.results.model_dump()}
+        else:
+            result = {"results": response_data.model_dump().get('results', {})}
         return JsonResponse(result)
     except Exception as e:
         error_msg = str(e).lower()
