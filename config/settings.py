@@ -50,6 +50,6 @@ CORS_ALLOWED_ORIGINS = [
     f"http://127.0.0.1:{FRONTEND_PORT}",
 ]
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = ['*']  # Allow all headers including X-Request-Id
+CORS_ALLOW_HEADERS = ['*']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
